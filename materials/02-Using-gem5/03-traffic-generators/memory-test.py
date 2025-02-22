@@ -23,17 +23,19 @@ parser.add_argument("--rate", type=str, help="Rate of the generator.")
 parser.add_argument(
     "--rd_pct", type=int, help="Read request percentage of the generator."
 )
+parser.add_argument(
+    "--generator",
+    choices=["linear", "random"],
+    help="Type of generator to use.",
+)
 args = parser.parse_args()
 
-memory = SingleChannelSimpleMemory(
-    latency="20ns",
-    bandwidth="32GB/s",
-    latency_var="0s",
-    size="1GiB",
-)
+gen_factory  = LinearGenerator if args.generator == "linear" else RandomGenerator
+
+memory = SingleChannelDDR4_2400(size="1GiB")
 board = TestBoard(
     clk_freq="3GHz",
-    generator=LinearGenerator(
+    generator=gen_factory(
         num_cores=1,
         rate=args.rate,
         rd_perc=args.rd_pct,
