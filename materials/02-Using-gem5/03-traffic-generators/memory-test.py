@@ -17,32 +17,58 @@ from gem5.components.memory.dram_interfaces.lpddr5 import (
 from gem5.components.processors.linear_generator import LinearGenerator
 from gem5.components.processors.random_generator import RandomGenerator
 from gem5.simulate.simulator import Simulator
+from experiment.hybrid_generator import HybridGenerator
 
 parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--num_cores", type=int, help="Number of cores in the generator."
+)
 parser.add_argument("--rate", type=str, help="Rate of the generator.")
 parser.add_argument(
     "--rd_pct", type=int, help="Read request percentage of the generator."
 )
 parser.add_argument(
     "--generator",
-    choices=["linear", "random"],
+    choices=["linear", "random", "hybrid"],
     help="Type of generator to use.",
+)
+parser.add_argument(
+    "--memory",
+    choices=["simple", "ddr4", "lpddr5"],
+    help="Type type of memory to use in the experiment.",
 )
 args = parser.parse_args()
 
-gen_factory = (
-    LinearGenerator if args.generator == "linear" else RandomGenerator
-)
+match args.generator:
+    case "linear":
+        gen_factory = LinearGenerator
+    case "random":
+        gen_factory = RandomGenerator
+    case "hybrid":
+        gen_factory = HybridGenerator
 
-memory = ChanneledMemory(
-    dram_interface_class=LPDDR5_6400_1x16_BG_BL32,
-    num_channels=4,
-    interleaving_size=64,
-)
+match args.memory:
+    case "simple":
+        memory = SingleChannelSimpleMemory(
+            latency="20ns",
+            bandwidth="10GB/s",
+            size="1GiB",
+        )
+    case "ddr4":
+        memory = SingleChannelDDR4_2400(
+            size="1GiB",
+        )
+    case "lpddr5":
+        memory = ChanneledMemory(
+            dram_interface_class=LPDDR5_6400_1x16_BG_BL32,
+            num_channels=4,
+            interleaving_size=64,
+        )
+
 board = TestBoard(
     clk_freq="3GHz",
     generator=gen_factory(
-        num_cores=1,
+        num_cores=args.num_cores,
         rate=args.rate,
         rd_perc=args.rd_pct,
     ),
@@ -62,5 +88,4 @@ latency = (
     stats.board.processor.cores[0].generator.totalReadLatency.value
     / stats.board.processor.cores[0].generator.totalReads.value
 )
-print(f"Total bandwidth: {total_bytes / seconds / 2**30:0.2f} GiB/s")
-print(f"Average latency: {latency / stats.simFreq.value * 1e9:0.2f} ns")
+print(f"Total bandwidth: {total_bytes / seconds / 2**30:0.2f} GiB/s\tAverage latency: {latency / stats.simFreq.value * 1e9:0.2f} ns")
