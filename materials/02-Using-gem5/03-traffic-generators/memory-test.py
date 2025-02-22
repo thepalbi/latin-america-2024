@@ -30,9 +30,15 @@ parser.add_argument(
 )
 args = parser.parse_args()
 
-gen_factory  = LinearGenerator if args.generator == "linear" else RandomGenerator
+gen_factory = (
+    LinearGenerator if args.generator == "linear" else RandomGenerator
+)
 
-memory = SingleChannelDDR4_2400(size="1GiB")
+memory = ChanneledMemory(
+    dram_interface_class=LPDDR5_6400_1x16_BG_BL32,
+    num_channels=4,
+    interleaving_size=64,
+)
 board = TestBoard(
     clk_freq="3GHz",
     generator=gen_factory(
