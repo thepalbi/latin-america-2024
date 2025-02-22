@@ -15,6 +15,7 @@ from gem5.components.cachehierarchies.classic.caches.mmu_cache import MMUCache
 
 from gem5.isas import ISA
 
+from gem5.utils import override
 from m5.objects import (
     BadAddr,
     Cache,
@@ -22,6 +23,7 @@ from m5.objects import (
     SystemXBar,
     SubSystem,
 )
+from m5.params import Port
 
 
 class PrivateL1PrivateL2SharedL3CacheHierarchy(AbstractClassicCacheHierarchy):
@@ -52,12 +54,20 @@ class PrivateL1PrivateL2SharedL3CacheHierarchy(AbstractClassicCacheHierarchy):
         self._l3_assoc = l3_assoc
 
         ## FILL THIS IN
+        self.membus = SystemXBar(width=64)
 
         # For FS mode
         self.membus.badaddr_responder = BadAddr()
         self.membus.default = self.membus.badaddr_responder.pio
 
     ## FILL THIS IN
+    @override
+    def get_mem_side_port(self) -> Port:
+        return self.membus.mem_side_ports
+
+    @override
+    def get_cpu_side_port(self) -> Port:
+        return self.membus.cpu_side_ports # pero el membus no esta *entre* la cpu y la memoria, por lo que haria falta otro xbar?
 
     def _create_core_cluster(self, core, l3_bus, isa):
         """
