@@ -18,6 +18,7 @@ from gem5.components.processors.linear_generator import LinearGenerator
 from gem5.components.processors.random_generator import RandomGenerator
 from gem5.simulate.simulator import Simulator
 from experiment.hybrid_generator import HybridGenerator
+from experiment.cache import MyPrivateL1SharedL2CacheHierarchy
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -51,13 +52,12 @@ match args.memory:
     case "simple":
         memory = SingleChannelSimpleMemory(
             latency="20ns",
-            bandwidth="10GB/s",
+            latency_var="0s",
+            bandwidth="32GB/s",
             size="1GiB",
         )
     case "ddr4":
-        memory = SingleChannelDDR4_2400(
-            size="1GiB",
-        )
+        memory = SingleChannelDDR4_2400()
     case "lpddr5":
         memory = ChanneledMemory(
             dram_interface_class=LPDDR5_6400_1x16_BG_BL32,
@@ -73,7 +73,7 @@ board = TestBoard(
         rd_perc=args.rd_pct,
     ),
     memory=memory,
-    cache_hierarchy=NoCache(),
+    cache_hierarchy=MyPrivateL1SharedL2CacheHierarchy(),
 )
 
 simulator = Simulator(board=board)
