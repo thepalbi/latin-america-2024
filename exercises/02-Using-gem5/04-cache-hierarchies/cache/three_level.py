@@ -15,7 +15,7 @@ from gem5.components.cachehierarchies.classic.caches.mmu_cache import MMUCache
 
 from gem5.isas import ISA
 
-from gem5.utils import override
+from gem5.utils.override import overrides
 from m5.objects import (
     BadAddr,
     Cache,
@@ -24,6 +24,21 @@ from m5.objects import (
     SubSystem,
 )
 from m5.params import Port
+
+
+class L3Cache(Cache):
+
+    def __init__(self, size, assoc):
+        super().__init__()
+        self.size = size
+        self.assoc = assoc
+        self.tag_latency = 20
+        self.data_latency = 20
+        self.response_latency = 1
+        self.mshrs = 20
+        self.tgts_per_mshr = 12
+        self.writeback_clean = (False,)
+        self.clusivity = "mostly_incl"
 
 
 class PrivateL1PrivateL2SharedL3CacheHierarchy(AbstractClassicCacheHierarchy):
@@ -61,13 +76,40 @@ class PrivateL1PrivateL2SharedL3CacheHierarchy(AbstractClassicCacheHierarchy):
         self.membus.default = self.membus.badaddr_responder.pio
 
     ## FILL THIS IN
-    @override
+    @overrides(AbstractClassicCacheHierarchy)
     def get_mem_side_port(self) -> Port:
         return self.membus.mem_side_ports
 
-    @override
+    @overrides(AbstractClassicCacheHierarchy)
     def get_cpu_side_port(self) -> Port:
-        return self.membus.cpu_side_ports # pero el membus no esta *entre* la cpu y la memoria, por lo que haria falta otro xbar?
+        return (
+            self.membus.cpu_side_ports
+        )  # pero el membus no esta *entre* la cpu y la memoria, por lo que haria falta otro xbar?
+
+    @overrides(AbstractClassicCacheHierarchy)
+    def incorporate_cache(self, board):
+        board.connect_system_port(self.membus.cpu_side_ports)
+
+        # Connect the memory system to the memory port on the board.
+        for _, port in board.get_memory().get_mem_ports():
+            self.membus.mem_side_ports = port
+
+        # Create an L3 crossbar
+        self.l3_bus = L2XBar()
+
+        self.clusters = [
+            self._create_core_cluster(
+                core, self.l3_bus, board.get_processor().get_isa()
+            )
+            for core in board.get_processor().get_cores()
+        ]
+
+        self.l3_cache = L3Cache(size=self._l3_size, assoc=self._l3_assoc)
+        self.l3_cache.mem_side = self.membus.cpu_side_ports
+        self.l3_cache.cpu_side = self.l3_bus.mem_side_ports
+
+        if board.has_coherent_io():
+            self._setup_io_cache(board)
 
     def _create_core_cluster(self, core, l3_bus, isa):
         """
@@ -77,7 +119,30 @@ class PrivateL1PrivateL2SharedL3CacheHierarchy(AbstractClassicCacheHierarchy):
 
         ## FILL THIS IN
         # Create the L1 and L2 caches, l2xbar, and connect them to the core
+        cluster.l1i_cache = L1ICache(
+            size=self._l1i_size,
+            assoc=self._l1i_assoc,
+            writeback_clean=False,
+        )
+        cluster.l1d_cache = L1DCache(
+            size=self._l1d_size,
+            assoc=self._l1d_assoc,
+        )
+        cluster.l2_cache = L2Cache(
+            size=self._l2_size,
+            assoc=self._l2_assoc,
+        )
 
+        cluster.l2_bus = L2XBar()
+
+        core.connect_icache(cluster.l1i_cache.cpu_side)
+        core.connect_dcache(cluster.l1d_cache.cpu_side)
+
+        # connect the two l1 cache mem side ports to the l2 bus cpu side
+        cluster.l1i_cache.mem_side = cluster.l2_bus.cpu_side_ports
+        cluster.l1d_cache.mem_side = cluster.l2_bus.cpu_side_ports
+        cluster.l2_cache.cpu_side = cluster.l2_bus.mem_side_ports
+        cluster.l2_cache.mem_side = l3_bus.cpu_side_ports
 
         cluster.iptw_cache = MMUCache(size="8KiB", writeback_clean=False)
         cluster.dptw_cache = MMUCache(size="8KiB", writeback_clean=False)
@@ -112,4 +177,3 @@ class PrivateL1PrivateL2SharedL3CacheHierarchy(AbstractClassicCacheHierarchy):
         )
         self.iocache.mem_side = self.membus.cpu_side_ports
         self.iocache.cpu_side = board.get_mem_side_coherent_io_port()
-
