@@ -15,3 +15,23 @@ Compared to 64KiB cache size for l1d,i
 | m5out-minor         | 0.037057   | 37056833000  | 33.95       | 0.916285  |
 | m5out-o3            | 0.020618   | 20618167000  | 38.97       | 1.646830  |
 | m5out-timing        | 0.053616   | 53615686000  | 14.80       | 0.633297  |
+
+Comparing custom sizes of o3:
+
+**IPC**
+
+| Configuration       | IPC       |
+|---------------------|-----------|
+| m5out-o3big         | 1.400691  |
+| m5out-o3little      | 0.714932  |
+| m5out-o3            | 1.400348  |
+
+**Times**
+
+| Configuration       | simSeconds | hostSeconds |
+|---------------------|------------|-------------|
+| m5out-o3big         | 0.024241   | 41.52       |
+| m5out-o3little      | 0.047494   | 51.71       |
+| m5out-o3            | 0.024247   | 40.58       |
+
+The speedup of big over little is 1.245 # https://en.wikipedia.org/wiki/Speedup
