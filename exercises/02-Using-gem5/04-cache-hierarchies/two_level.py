@@ -76,7 +76,7 @@ def print_results_for_obj(obj: any, freq: float, sim_seconds: int):
     bandwidth, latency = get_bandwidth_and_latency(obj, freq, sim_seconds)
     print(f"Total bandwidth: {bandwidth / 2**30:0.2f} GiB/s\tAverage latency: {latency * 10**9 :0.6f} ns")
 
-import pdb; pdb.set_trace()
+# import pdb; pdb.set_trace()
 
 print_results_for_obj(stats.board.processor.cores[0].generator, stats.simFreq.value, seconds)
 
