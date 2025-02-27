@@ -35,3 +35,26 @@ Comparing custom sizes of o3:
 | m5out-o3            | 0.024247   | 40.58       |
 
 The speedup of big over little is 1.245 # https://en.wikipedia.org/wiki/Speedup
+
+## custom benchmark
+
+```
+pablo@pablok:~/phd/latin-america-2024/exercises/02-Using-gem5/05-cores$ grep "board.processor.cores.core.commitStats0.numOps" m5out-default/* m5out-roi/*
+m5out-default/stats.txt:board.processor.cores.core.commitStats0.numOps     41314070                       # Number of ops (including micro ops) committed (thread level) (Count)
+m5out-default/stats.txt:board.processor.cores.core.commitStats0.numOpsNotNOP            0                       # Number of Ops (including micro ops) Simulated (Count)
+m5out-roi/stats.txt:board.processor.cores.core.commitStats0.numOps            0                       # Number of ops (including micro ops) committed (thread level) (Count)
+m5out-roi/stats.txt:board.processor.cores.core.commitStats0.numOpsNotNOP            0                       # Number of Ops (including micro ops) Simulated (Count)
+m5out-roi/stats.txt:board.processor.cores.core.commitStats0.numOps            0                       # Number of ops (including micro ops) committed (thread level) (Count)
+m5out-roi/stats.txt:board.processor.cores.core.commitStats0.numOpsNotNOP            0                       # Number of Ops (including micro ops) Simulated (Count)
+m5out-roi/stats.txt:board.processor.cores.core.commitStats0.numOps       268955                       # Number of ops (including micro ops) committed (thread level) (Count)
+m5out-roi/stats.txt:board.processor.cores.core.commitStats0.numOpsNotNOP            0                       # Number of Ops (including micro ops) Simulated (Count)
+```
+
+- % of instruction in ROI vs. full benchmark: 0.006510009786012368 ~ 0.65%
+- cache hit ratio:
+  - ROI
+    - l1d: 0,999114794005
+    - l2 (ReadExc): 0,652173913043
+    - l2 (ReadShared): 0,809701492537
+
+## custom benchmark compared to RISC-V
