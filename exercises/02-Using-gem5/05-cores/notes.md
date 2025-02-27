@@ -58,3 +58,34 @@ m5out-roi/stats.txt:board.processor.cores.core.commitStats0.numOpsNotNOP        
     - l2 (ReadShared): 0,809701492537
 
 ## custom benchmark compared to RISC-V
+
+```
+m5out-cc-riscv/stats.txt:board.processor.cores.core.commitStats0.numOps       225053                       # Number of ops (including micro ops) committed (thread level) (Count)
+m5out-cc-x86/stats.txt:board.processor.cores.core.commitStats0.numOps       268938                       # Number of ops (including micro ops) committed (thread level) (Count)
+```
+
+This represents a 1,19499851146 speedup in amount of instrs
+
+```
+# cache numbers under ROI
+# RISC-V
+m5out-cc-riscv/stats.txt:board.cache_hierarchy.l1dcaches.ReadReq.hits::total        61016                       # number of ReadReq hits (Count)
+m5out-cc-riscv/stats.txt:board.cache_hierarchy.l1dcaches.ReadReq.accesses::total        61086                       # number of ReadReq accesses(hits+misses) (Count)
+m5out-cc-riscv/stats.txt:board.cache_hierarchy.l2cache.ReadExReq.hits::total           11                       # number of ReadExReq hits (Count)
+m5out-cc-riscv/stats.txt:board.cache_hierarchy.l2cache.ReadExReq.accesses::total           21                       # number of ReadExReq accesses(hits+misses) (Count)
+m5out-cc-riscv/stats.txt:board.cache_hierarchy.l2cache.ReadSharedReq.hits::total          656                       # number of ReadSharedReq hits (Count)
+m5out-cc-riscv/stats.txt:board.cache_hierarchy.l2cache.ReadSharedReq.accesses::total          763                       # number of ReadSharedReq accesses(hits+misses) (Count)
+
+# x86
+m5out-cc-x86/stats.txt:board.cache_hierarchy.l1dcaches.ReadReq.hits::total        61064                       # number of ReadReq hits (Count)
+m5out-cc-x86/stats.txt:board.cache_hierarchy.l1dcaches.ReadReq.accesses::total        61133                       # number of ReadReq accesses(hits+misses) (Count)
+m5out-cc-x86/stats.txt:board.cache_hierarchy.l2cache.ReadExReq.hits::total           17                       # number of ReadExReq hits (Count)
+m5out-cc-x86/stats.txt:board.cache_hierarchy.l2cache.ReadExReq.accesses::total           25                       # number of ReadExReq accesses(hits+misses) (Count)
+m5out-cc-x86/stats.txt:board.cache_hierarchy.l2cache.ReadSharedReq.hits::total          650                       # number of ReadSharedReq hits (Count)
+m5out-cc-x86/stats.txt:board.cache_hierarchy.l2cache.ReadSharedReq.accesses::total          801                       # number of ReadSharedReq accesses(hits+misses) (Count)
+```
+
+| Architecture | L1D Hit Ratio       | L2-Ex Hit Ratio       | L2-Shared Hit Ratio       |
+|--------------|---------------------|-----------------------|---------------------------|
+| RISC-V       | 0.9988540745833743  | 0.5238095238095238    | 0.8597640891218873        |
+| x86          | 0.9988713133659398  | 0.68                  | 0.8114856429463171        |

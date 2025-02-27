@@ -13,12 +13,14 @@ import m5
 from processors import BigProcessor, LittleProcessor
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--arch", dest="arch", choices=["x86", "riscv"], required=True, help="Architecture to simulate.")
 parser.add_argument("--cpu-type", dest="cpu_type", choices=["o3", "o3little", "o3big", "timing"], required=True, help="CPU type to simulate.")
 parser.add_argument("--l1-cache-size", dest="l1cachesize", type=str, required=True, help="Size of the l1d and l1i caches.")
 parser.add_argument("--l2-cache-size", dest="l2cachesize", type=str, required=True, help="Size of the l2 cache.")
 parser.add_argument("--workload", dest="workload", choices=["roi", "default"], required=True, help="Workload to use.")
 args = parser.parse_args()
 
+isa = ISA.X86 if args.arch == "x86" else ISA.RISCV
 
 match args.cpu_type:
   case "o3big":
@@ -28,20 +30,18 @@ match args.cpu_type:
   case "o3":
     proc = SimpleProcessor(
       cpu_type=CPUTypes.O3,
-      isa=ISA.X86,
+      isa=isa,
       num_cores=1,
     )
   case "timing":
     proc = SimpleProcessor(
       cpu_type=CPUTypes.TIMING, # read from cpu_type
-      isa=ISA.X86,
+      isa=isa,
       num_cores=1,
     )
   case _:
     raise ValueError("Invalid CPU type selected")
 
-
-workload = obtain_resource("riscv-matrix-multiply-run")
 
 board = SimpleBoard(
   clk_freq="3GHz",
@@ -54,14 +54,10 @@ board = SimpleBoard(
   ),
 )
 
-if args.workload == "roi":
-  board.set_se_binary_workload(BinaryResource(
-    local_path="/home/pablo/phd/latin-america-2024/gem5-resources/src/matrix-multiply-roi/matrix-multiply",
-  ))
-else:
-  board.set_se_binary_workload(BinaryResource(
-    local_path="/home/pablo/phd/latin-america-2024/gem5-resources/src/matrix-multiply/matrix-multiply",
-  ))
+local_binary_path = f"/home/pablo/phd/latin-america-2024/gem5-resources/src/matrix-multiply-roi/dist/{args.arch.upper()}/matrix-multiply-roi"
+board.set_se_binary_workload(BinaryResource(
+  local_path=local_binary_path,
+))
 
 def reset_and_dump_generator():
   print("Resetting stats and dumping them")
